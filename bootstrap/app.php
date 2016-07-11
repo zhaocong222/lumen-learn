@@ -12,7 +12,7 @@ try {
 $app = new Laravel\Lumen\Application(
     realpath(__DIR__.'/../')
 );
-
+exit();
 //容器Container->singleton方法
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class, // (string)Illuminate\Contracts\Debug\ExceptionHandler
