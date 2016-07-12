@@ -3,6 +3,7 @@
 require_once __DIR__.'/../vendor/autoload.php';
 
 try {
+    //加载 根目录下的 .env文件，将 .env的配置注入到了$_SERVER和$_ENV
     (new Dotenv\Dotenv(__DIR__.'/../'))->load();
 } catch (Dotenv\Exception\InvalidPathException $e) {
     //
