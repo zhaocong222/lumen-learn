@@ -12,9 +12,19 @@ try {
 $app = new Laravel\Lumen\Application(
     realpath(__DIR__.'/../')
 );
-exit();
+
 //容器Container->singleton方法
+
+//放入容器中
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class, // (string)Illuminate\Contracts\Debug\ExceptionHandler
     App\Exceptions\Handler::class // (string)App\Exceptions\Handler
 );
+
+$app->singleton(
+    Illuminate\Contracts\Console\Kernel::class,
+    App\Console\Kernel::class
+);
+
+
+

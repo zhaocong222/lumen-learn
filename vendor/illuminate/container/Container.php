@@ -211,7 +211,10 @@ class Container implements ArrayAccess, ContainerContract
         exit();
         */
         $this->bindings[$abstract] = compact('concrete', 'shared');
-
+        /*
+        var_dump(isset($this->resolved[$abstract]));
+        var_dump(isset($this->instances[$abstract]));
+        */
         //$abstract ->basePath
         //resolved -> return isset($this->resolved[$abstract]) || isset($this->instances[$abstract]);
         if ($this->resolved($abstract)) {
@@ -219,50 +222,7 @@ class Container implements ArrayAccess, ContainerContract
         }
 
     }
-
-    /*
-    public function bind($abstract, $concrete = null, $shared = false)
-    {
-        $abstract = $this->normalize($abstract);
-
-        $concrete = $this->normalize($concrete);
-
-        // If the given types are actually an array, we will assume an alias is being
-        // defined and will grab this "real" abstract class name and register this
-        // alias with the container so that it can be used as a shortcut for it.
-        if (is_array($abstract)) {
-            list($abstract, $alias) = $this->extractAlias($abstract);
-
-            $this->alias($abstract, $alias);
-        }
-
-        // If no concrete type was given, we will simply set the concrete type to the
-        // abstract type. This will allow concrete type to be registered as shared
-        // without being forced to state their classes in both of the parameter.
-        $this->dropStaleInstances($abstract);
-
-        if (is_null($concrete)) {
-            $concrete = $abstract;
-        }
-
-        // If the factory is not a Closure, it means it is just a class name which is
-        // bound into this container to the abstract type and we will just wrap it
-        // up inside its own Closure to give us more convenience when extending.
-        if (! $concrete instanceof Closure) {
-            $concrete = $this->getClosure($abstract, $concrete);
-        }
-
-        $this->bindings[$abstract] = compact('concrete', 'shared');
-
-        // If the abstract type was already resolved in this container we'll fire the
-        // rebound listener so that any objects which have already gotten resolved
-        // can have their copy of the object updated via the listener callbacks.
-        if ($this->resolved($abstract)) {
-            $this->rebound($abstract);
-        }
-    }
-    */
-
+    
     /**
      * Get the Closure to be used when building a type.
      *
