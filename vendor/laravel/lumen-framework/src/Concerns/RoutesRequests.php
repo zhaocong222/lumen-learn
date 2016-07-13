@@ -336,6 +336,7 @@ trait RoutesRequests
         $response = $this->dispatch($request);
 
         if ($response instanceof SymfonyResponse) {
+            //输出头信息,并且echo $content;
             $response->send();
         } else {
             echo (string) $response;
@@ -379,21 +380,22 @@ trait RoutesRequests
     {
         //解析访问的url，
         // $method 访问方法, $pathInfo 访问 url
-
         list($method, $pathInfo) = $this->parseIncomingRequest($request);
         //var_dump($method); ->GET
         //var_dump($pathInfo); ->/
-        exit();
+
         try {
 
             return $this->sendThroughPipeline($this->middleware, function () use ($method, $pathInfo) {
-                if (isset($this->routes[$method.$pathInfo])) {
+                if (isset($this->routes[$method.$pathInfo])) { //$this->routes['Get/']
+                    //$this->routes[$method.$pathInfo]['action'] 为回调函数
                     return $this->handleFoundRoute([true, $this->routes[$method.$pathInfo]['action'], []]);
                 }
 
                 return $this->handleDispatcherResponse(
                     $this->createDispatcher()->dispatch($method, $pathInfo)
                 );
+
             });
         } catch (Exception $e) {
             return $this->sendExceptionToHandler($e);
@@ -416,6 +418,7 @@ trait RoutesRequests
 
             return [$request->getMethod(), $request->getPathInfo()];
         } else {
+            // $this->getMethod() ->$_SERVER['REQUEST_METHOD'];
             return [$this->getMethod(), $this->getPathInfo()];
         }
     }
@@ -475,6 +478,9 @@ trait RoutesRequests
     {
         $this->currentRoute = $routeInfo;
 
+        //$this['request']-> Illuminate\Http\Request
+
+        //$this['request']会触发container/Container 的__get ,然后offsetGet
         $this['request']->setRouteResolver(function () {
             return $this->currentRoute;
         });
@@ -511,12 +517,17 @@ trait RoutesRequests
 
         foreach ($action as $value) {
             if ($value instanceof Closure) {
+                //复制当前闭包对象，绑定指定的$this对象和类作用域。
                 $closure = $value->bindTo(new RoutingClosure);
                 break;
             }
         }
 
         try {
+            //return $this->call($closure, $routeInfo[2]);
+            //var_dump($this->call($closure, $routeInfo[2]));
+            //exit();
+
             return $this->prepareResponse($this->call($closure, $routeInfo[2]));
         } catch (HttpResponseException $e) {
             return $e->getResponse();
@@ -652,6 +663,7 @@ trait RoutesRequests
      */
     public function prepareResponse($response)
     {
+
         if ($response instanceof PsrResponseInterface) {
             $response = (new HttpFoundationFactory)->createResponse($response);
         } elseif (! $response instanceof SymfonyResponse) {
@@ -685,7 +697,7 @@ trait RoutesRequests
     protected function getPathInfo()
     {
         $query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
-
+        //
         return '/'.trim(str_replace('?'.$query, '', $_SERVER['REQUEST_URI']), '/');
     }
 

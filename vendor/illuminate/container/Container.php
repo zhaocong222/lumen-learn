@@ -502,7 +502,6 @@ class Container implements ArrayAccess, ContainerContract
         }
 
         $dependencies = $this->getMethodDependencies($callback, $parameters);
-
         return call_user_func_array($callback, $dependencies);
     }
 
@@ -610,21 +609,31 @@ class Container implements ArrayAccess, ContainerContract
      */
     public function make($abstract, array $parameters = [])
     {
+        //$abstract = request
+        // $this->getAlias 从成员变量aliases中获取request-》'request' => 'Illuminate\Http\Request',
         $abstract = $this->getAlias($this->normalize($abstract));
 
-        // If an instance of the type is currently being managed as a singleton we'll
-        // just return an existing instance instead of instantiating new instances
-        // so the developer can keep using the same objects instance every time.
+        //如果存在直接返回 ,instances应该是存储类的实例化后，犹如注册树。
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
 
         $concrete = $this->getConcrete($abstract);
 
-        // We're ready to instantiate an instance of the concrete type registered for
-        // the binding. This will instantiate the types, as well as resolve any of
-        // its "nested" dependencies recursively until all have gotten resolved.
+        /*
+        if ($abstract == 'Illuminate\Http\Request'){
+            var_dump($abstract);
+            var_dump($concrete);
+        }
+        */
+        //isBuildable是否实例化
         if ($this->isBuildable($concrete, $abstract)) {
+            /*
+            if ($abstract == 'Illuminate\Http\Request'){
+                echo $concrete;
+                print_r($parameters);
+            }
+            */
             $object = $this->build($concrete, $parameters);
         } else {
             $object = $this->make($concrete, $parameters);
@@ -707,15 +716,7 @@ class Container implements ArrayAccess, ContainerContract
         return [];
     }
 
-    /**
-     * Instantiate a concrete instance of the given type.
-     *
-     * @param  string  $concrete
-     * @param  array   $parameters
-     * @return mixed
-     *
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     */
+    //实例化类
     public function build($concrete, array $parameters = [])
     {
         // If the concrete type is actually a Closure, we will just execute it and
@@ -727,10 +728,9 @@ class Container implements ArrayAccess, ContainerContract
 
         $reflector = new ReflectionClass($concrete);
 
-        // If the type is not instantiable, the developer is attempting to resolve
-        // an abstract type such as an Interface of Abstract Class and there is
-        // no binding registered for the abstractions so we need to bail out.
+        // 检查类是否可实例化, 排除抽象类abstract和对象接口interface
         if (! $reflector->isInstantiable()) {
+            //无法实例化
             if (! empty($this->buildStack)) {
                 $previous = implode(', ', $this->buildStack);
 
@@ -743,33 +743,33 @@ class Container implements ArrayAccess, ContainerContract
         }
 
         $this->buildStack[] = $concrete;
-
+        /** @var ReflectionMethod $constructor 获取类的构造函数 */
         $constructor = $reflector->getConstructor();
 
-        // If there are no constructors, that means there are no dependencies then
-        // we can just resolve the instances of the objects right away, without
-        // resolving any other types or dependencies out of these containers.
+        //echo $concrete; //Illuminate\Http\Request
+        // 若无构造函数，直接实例化并返回
         if (is_null($constructor)) {
             array_pop($this->buildStack);
 
             return new $concrete;
         }
 
+        //取构造函数参数,通过 ReflectionParameter 数组返回参数列表(默认参数)
         $dependencies = $constructor->getParameters();
 
-        // Once we have all the constructor's parameters we can create each of the
-        // dependency instances and then use the reflection instances to make a
-        // new instance of this class, injecting the created dependencies in.
+        //$parameters 自己传递参数
         $parameters = $this->keyParametersByArgument(
             $dependencies, $parameters
         );
 
+        //解决依赖，获取参数
         $instances = $this->getDependencies(
             $dependencies, $parameters
         );
 
         array_pop($this->buildStack);
 
+        // 创建一个类的新实例，给出的参数将传递到类的构造函数。
         return $reflector->newInstanceArgs($instances);
     }
 
@@ -865,6 +865,7 @@ class Container implements ArrayAccess, ContainerContract
     protected function keyParametersByArgument(array $dependencies, array $parameters)
     {
         foreach ($parameters as $key => $value) {
+            //is_numeric 检测变量是否为数字或数字字符串
             if (is_numeric($key)) {
                 unset($parameters[$key]);
 
@@ -1160,6 +1161,7 @@ class Container implements ArrayAccess, ContainerContract
      */
     public function offsetGet($key)
     {
+        //request
         return $this->make($key);
     }
 

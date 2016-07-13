@@ -324,11 +324,12 @@ class Response
      */
     public function sendHeaders()
     {
-        // headers have already been sent by the developer
+        //header已经发送了
         if (headers_sent()) {
             return $this;
         }
 
+        //has -> array_key_exists(str_replace('_', '-', strtolower($key)), $this->headers)
         if (!$this->headers->has('Date')) {
             $this->setDate(\DateTime::createFromFormat('U', time()));
         }
@@ -370,8 +371,9 @@ class Response
      */
     public function send()
     {
+        //设置头信息
         $this->sendHeaders();
-        $this->sendContent();
+        $this->sendContent(); //-> echo $this->content;
 
         return $this;
     }
