@@ -5,7 +5,9 @@ use Illuminate\Container\Container;
 
 class Application extends Container
 {
-    use Concerns\RegistersExceptionHandlers;
+    use Concerns\RoutesRequests,
+        Concerns\RegistersExceptionHandlers;
+
 
     //初始化一些东西
     public function __construct($basePath = null)
@@ -71,6 +73,11 @@ class Application extends Container
         return $this->basePath.DIRECTORY_SEPARATOR.'app';
     }
 
+    //返回版本号
+    public function version()
+    {
+        return '尼玛这里是 Lumen (5.2.7)';
+    }
 
 
 }

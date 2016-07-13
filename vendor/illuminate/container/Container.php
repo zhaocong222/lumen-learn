@@ -191,7 +191,6 @@ class Container implements ArrayAccess, ContainerContract
         }
 
         //$concrete = $abstract;
-
         //$concrete　不是回调函数
         if (! $concrete instanceof Closure){
             //返回匿名函数
@@ -199,9 +198,11 @@ class Container implements ArrayAccess, ContainerContract
             //$concrete = $this->getClosure($abstract, $concrete);
             //上面一行等价下面的
             $concrete =  function ($c, $parameters = []) use ($abstract, $concrete) {
+
                 $method = ($abstract == $concrete) ? 'build' : 'make';
                 //这里需要研究下build和make意义
                 return $c->$method($concrete, $parameters);
+
             };
 
         }
@@ -210,7 +211,9 @@ class Container implements ArrayAccess, ContainerContract
         var_dump(compact('aaa', 'bbb'));
         exit();
         */
+
         $this->bindings[$abstract] = compact('concrete', 'shared');
+        //print_r($this->bindings);
         /*
         var_dump(isset($this->resolved[$abstract]));
         var_dump(isset($this->instances[$abstract]));
@@ -222,7 +225,7 @@ class Container implements ArrayAccess, ContainerContract
         }
 
     }
-    
+
     /**
      * Get the Closure to be used when building a type.
      *

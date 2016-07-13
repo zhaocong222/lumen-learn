@@ -1,4 +1,5 @@
 <?php
+header("Content-type:text/html;charset=utf-8");
 
 /*
 |--------------------------------------------------------------------------
@@ -25,4 +26,5 @@ $app = require __DIR__.'/../bootstrap/app.php';
 |
 */
 
+//trait Concerns\RoutesRequests -> run();
 $app->run();

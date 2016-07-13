@@ -87,10 +87,8 @@ trait RoutesRequests
             $attributes['middleware'] = explode('|', $attributes['middleware']);
         }
 
-        $this->groupAttributes = $attributes;
-
-        call_user_func($callback, $this);
-
+        $this->groupAttributes = $attributes; //array->Array ( [namespace] => App\Http\Controllers )
+        call_user_func($callback, $this); //get_class($this); ->Laravel\Lumen\Application
         $this->groupAttributes = $parentGroupAttributes;
     }
 
@@ -103,6 +101,7 @@ trait RoutesRequests
      */
     public function get($uri, $action)
     {
+        //$action 为回调函数
         $this->addRoute('GET', $uri, $action);
 
         return $this;
@@ -186,10 +185,11 @@ trait RoutesRequests
      * @param  mixed  $action
      * @return void
      */
+    //添加一个路由到collection中，方便管理
     public function addRoute($method, $uri, $action)
     {
-        $action = $this->parseAction($action);
-
+        $action = $this->parseAction($action); // array->[0=> object(Closure)[7]]
+        //$this->groupAttributes-> 'namespace' => string 'App\Http\Controllers'
         if (isset($this->groupAttributes)) {
             if (isset($this->groupAttributes['prefix'])) {
                 $uri = trim($this->groupAttributes['prefix'], '/').'/'.trim($uri, '/');
@@ -202,7 +202,7 @@ trait RoutesRequests
             $action = $this->mergeGroupAttributes($action);
         }
 
-        $uri = '/'.trim($uri, '/');
+        $uri = '/'.trim($uri, '/'); //去除2端的 /,最左拼接 /
 
         if (isset($action['as'])) {
             $this->namedRoutes[$action['as']] = $uri;
@@ -213,6 +213,7 @@ trait RoutesRequests
                 $this->routes[$verb.$uri] = ['method' => $verb, 'uri' => $uri, 'action' => $action];
             }
         } else {
+            // GET/
             $this->routes[$method.$uri] = ['method' => $method, 'uri' => $uri, 'action' => $action];
         }
     }
@@ -331,6 +332,7 @@ trait RoutesRequests
      */
     public function run($request = null)
     {
+        //get_class($this); ->Laravel\Lumen\Application
         $response = $this->dispatch($request);
 
         if ($response instanceof SymfonyResponse) {
@@ -375,9 +377,15 @@ trait RoutesRequests
      */
     public function dispatch($request = null)
     {
-        list($method, $pathInfo) = $this->parseIncomingRequest($request);
+        //解析访问的url，
+        // $method 访问方法, $pathInfo 访问 url
 
+        list($method, $pathInfo) = $this->parseIncomingRequest($request);
+        //var_dump($method); ->GET
+        //var_dump($pathInfo); ->/
+        exit();
         try {
+
             return $this->sendThroughPipeline($this->middleware, function () use ($method, $pathInfo) {
                 if (isset($this->routes[$method.$pathInfo])) {
                     return $this->handleFoundRoute([true, $this->routes[$method.$pathInfo]['action'], []]);

@@ -5,7 +5,7 @@ require_once __DIR__.'/../vendor/autoload.php';
 try {
     (new Dotenv\Dotenv(__DIR__.'/../'))->load();
 } catch (Dotenv\Exception\InvalidPathException $e) {
-    //
+
 }
 
 //realpath(__DIR__.'/../') -> /home/zc/web/lu  绝对路径
@@ -25,6 +25,21 @@ $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
     App\Console\Kernel::class
 );
+
+/*
+var_dump($app);
+exit();
+*/
+// $group-> trait Concerns\RoutesRequests;
+//
+$app->group(['namespace' => 'App\Http\Controllers'], function ($app) {
+    //$app ->routes.php里面会使用
+    require __DIR__.'/../app/Http/routes.php';
+});
+
+return $app;
+
+
 
 
 
