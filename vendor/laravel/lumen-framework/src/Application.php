@@ -1,15 +1,31 @@
 <?php
 namespace Laravel\Lumen;
 
+use Monolog\Logger;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Composer;
+use Monolog\Handler\StreamHandler;
 use Illuminate\Container\Container;
+use Monolog\Formatter\LineFormatter;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\ServiceProvider;
+use Zend\Diactoros\Response as PsrResponse;
+use Illuminate\Config\Repository as ConfigRepository;
+use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
 
 class Application extends Container
 {
     use Concerns\RoutesRequests,
         Concerns\RegistersExceptionHandlers;
 
+    protected $basePath;
+
     //加载的配置
     protected $loadedConfigurations = [];
+    //The service binding methods that have been executed.
+    protected $ranServiceBinders = [];
 
 
     //初始化一些东西
@@ -19,10 +35,7 @@ class Application extends Container
         date_default_timezone_set(env('APP_TIMEZONE','UTC'));
 
         //执行魔术方法__set,然后执行offsetSet方法， 将基础路径设为根目录 /home/zc/web/lu
-        var_dump(isset($this->basePath));
         $this->basePath = $basePath;
-        var_dump(isset($this->basePath)); //false
-        exit();
         $this->bootstrapContainer();
         //注册错误和异常处理
         //$this->registerErrorHandling();
@@ -92,20 +105,54 @@ class Application extends Container
         if (isset($this->loadedConfigurations[$name])){
             return;
         }
-
         //给一个默认值
         $this->loadedConfigurations[$name] = true;
         //获取配置文件的路径
-        $path = $this->getConfigurationPath($name);
+        if($path = $this->getConfigurationPath($name)){
+            //$this->make('config') -> 初始化 Illuminate\Config\Repository的$items成员属性
+            //$this->make('config') -> 相当于 new Illuminate\Config\Repository()
+            //设置 $name.php 里面的属性
+            //$this->make('config')->set($name, require $path); //框架本身代码
 
+            //修改后
+            $this->make('config')->set($name,require $path);
+            //返回设置的配置文件
 
+            //print_r($this->make('config')->get($name));
+            //自己修改返回的
+            return $this->make('config')->get($name);
+        }
 
     }
 
-    //获取配置文件的路径
+
+    public function make($abstract, array $parameters = [])
+    {
+        $abstract = $this->getAlias($this->normalize($abstract));
+
+        if (array_key_exists($abstract,$this->availableBindings) &&
+            !array_key_exists($this->availableBindings[$abstract], $this->ranServiceBinders))
+        {
+            //$this->availableBindings['config'] = 'registerConfigBindings';
+            $this->{$method = $this->availableBindings[$abstract]}(); //$this->registerConfigBindings();
+            $this->ranServiceBinders[$method] = true;
+        }
+        return parent::make($abstract, $parameters);//实质上就是return new ConfigRepository;
+    }
+
+    //注册配置文件绑定
+    protected function registerConfigBindings()
+    {
+        //执行bind ,把$this->bindings['config'] = ['concrete'=>匿名函数,'shared'=>1]
+        $this->singleton('config', function () {
+            return new ConfigRepository;
+        });
+    }
+
+
+    //返回配置文件的路径 .$app->configure('xx') 根目录下config目录里 -> xx.php
     public function getConfigurationPath($name = null)
     {
-
         if (! $name) {
 
             $appConfigDir = $this->basePath('config').'/';
@@ -118,7 +165,6 @@ class Application extends Container
         } else {
 
             $appConfigPath = $this->basePath('config').'/'.$name.'.php';
-            exit($appConfigPath);
 
             if (file_exists($appConfigPath)) {
                 return $appConfigPath;
@@ -132,9 +178,6 @@ class Application extends Container
     //获取basePath
     public function basePath($path = null)
     {
-        var_dump(isset($this->basePath));
-        echo 1231;
-        exit();
         //getcwd(); ->/home/zc/web/lu/public
         if (isset($this->basePath)){
             return rtrim($this->basePath,'/').($path ? DIRECTORY_SEPARATOR.$path : $path);
@@ -158,6 +201,109 @@ class Application extends Container
         //***cgi
         return php_sapi_name() == 'cli';
     }
+
+    protected function registerRequestBindings()
+    {
+        $this->singleton('Illuminate\Http\Request', function () {
+            return $this->prepareRequest(Request::capture());
+        });
+    }
+
+    protected function prepareRequest(Request $request)
+    {
+        $request->setUserResolver(function () {
+            return $this->make('auth')->user();
+        })->setRouteResolver(function () {
+            return $this->currentRoute;
+        });
+
+        return $request;
+    }
+
+    /**
+     * Register container bindings for the PSR-7 request implementation.
+     *
+     * @return void
+     */
+    protected function registerPsrRequestBindings()
+    {
+        $this->singleton('Psr\Http\Message\ServerRequestInterface', function () {
+            return (new DiactorosFactory)->createRequest($this->make('request'));
+        });
+    }
+
+    /**
+     * Register container bindings for the PSR-7 response implementation.
+     *
+     * @return void
+     */
+    protected function registerPsrResponseBindings()
+    {
+        $this->singleton('Psr\Http\Message\ResponseInterface', function () {
+            return new PsrResponse();
+        });
+    }
+
+    /**
+     * Register container bindings for the application.
+     *
+     * @return void
+     */
+    protected function registerTranslationBindings()
+    {
+        $this->singleton('translator', function () {
+            $this->configure('app');
+
+            $this->instance('path.lang', $this->getLanguagePath());
+
+            $this->register('Illuminate\Translation\TranslationServiceProvider');
+
+            return $this->make('translator');
+        });
+    }
+
+
+
+    //可用的容器绑定
+    public $availableBindings = [
+        'auth' => 'registerAuthBindings',
+        'auth.driver' => 'registerAuthBindings',
+        'Illuminate\Contracts\Auth\Guard' => 'registerAuthBindings',
+        'Illuminate\Contracts\Auth\Access\Gate' => 'registerAuthBindings',
+        'Illuminate\Contracts\Broadcasting\Broadcaster' => 'registerBroadcastingBindings',
+        'Illuminate\Contracts\Bus\Dispatcher' => 'registerBusBindings',
+        'cache' => 'registerCacheBindings',
+        'cache.store' => 'registerCacheBindings',
+        'Illuminate\Contracts\Cache\Factory' => 'registerCacheBindings',
+        'Illuminate\Contracts\Cache\Repository' => 'registerCacheBindings',
+        'composer' => 'registerComposerBindings',
+        'config' => 'registerConfigBindings',
+        'db' => 'registerDatabaseBindings',
+        'Illuminate\Database\Eloquent\Factory' => 'registerDatabaseBindings',
+        'encrypter' => 'registerEncrypterBindings',
+        'Illuminate\Contracts\Encryption\Encrypter' => 'registerEncrypterBindings',
+        'events' => 'registerEventBindings',
+        'Illuminate\Contracts\Events\Dispatcher' => 'registerEventBindings',
+        'files' => 'registerFilesBindings',
+        'hash' => 'registerHashBindings',
+        'Illuminate\Contracts\Hashing\Hasher' => 'registerHashBindings',
+        'log' => 'registerLogBindings',
+        'Psr\Log\LoggerInterface' => 'registerLogBindings',
+        'queue' => 'registerQueueBindings',
+        'queue.connection' => 'registerQueueBindings',
+        'Illuminate\Contracts\Queue\Factory' => 'registerQueueBindings',
+        'Illuminate\Contracts\Queue\Queue' => 'registerQueueBindings',
+        'request' => 'registerRequestBindings',
+        'Psr\Http\Message\ServerRequestInterface' => 'registerPsrRequestBindings',
+        'Psr\Http\Message\ResponseInterface' => 'registerPsrResponseBindings',
+        'Illuminate\Http\Request' => 'registerRequestBindings',
+        'translator' => 'registerTranslationBindings',
+        'url' => 'registerUrlGeneratorBindings',
+        'validator' => 'registerValidatorBindings',
+        'Illuminate\Contracts\Validation\Factory' => 'registerValidatorBindings',
+        'view' => 'registerViewBindings',
+        'Illuminate\Contracts\View\Factory' => 'registerViewBindings',
+    ];
 
 
 

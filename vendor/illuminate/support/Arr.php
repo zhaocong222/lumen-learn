@@ -467,7 +467,6 @@ class Arr
         }
 
         $array[array_shift($keys)] = $value;
-
         return $array;
     }
 

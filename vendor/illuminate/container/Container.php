@@ -206,14 +206,8 @@ class Container implements ArrayAccess, ContainerContract
             };
 
         }
-
-        /*
-        var_dump(compact('aaa', 'bbb'));
-        exit();
-        */
-
+        //放入bindings容器
         $this->bindings[$abstract] = compact('concrete', 'shared');
-        //print_r($this->bindings);
         /*
         var_dump(isset($this->resolved[$abstract]));
         var_dump(isset($this->instances[$abstract]));
@@ -618,7 +612,7 @@ class Container implements ArrayAccess, ContainerContract
             return $this->instances[$abstract];
         }
 
-        $concrete = $this->getConcrete($abstract);
+        $concrete = $this->getConcrete($abstract); //return $this->bindings[$abstract]['concrete'];
 
         /*
         if ($abstract == 'Illuminate\Http\Request'){
@@ -634,6 +628,7 @@ class Container implements ArrayAccess, ContainerContract
                 print_r($parameters);
             }
             */
+            //实例化
             $object = $this->build($concrete, $parameters);
         } else {
             $object = $this->make($concrete, $parameters);
@@ -719,9 +714,7 @@ class Container implements ArrayAccess, ContainerContract
     //实例化类
     public function build($concrete, array $parameters = [])
     {
-        // If the concrete type is actually a Closure, we will just execute it and
-        // hand back the results of the functions, which allows functions to be
-        // used as resolvers for more fine-tuned resolution of these objects.
+        //如果是匿名函数，直接执行
         if ($concrete instanceof Closure) {
             return $concrete($this, $parameters);
         }

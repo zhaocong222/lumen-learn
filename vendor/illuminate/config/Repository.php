@@ -59,12 +59,30 @@ class Repository implements ArrayAccess, ConfigContract
     public function set($key, $value = null)
     {
         if (is_array($key)) {
+            //比如 config/app.php里的配置
             foreach ($key as $innerKey => $innerValue) {
                 Arr::set($this->items, $innerKey, $innerValue);
             }
         } else {
             Arr::set($this->items, $key, $value);
         }
+
+        //print_r($this->items);  一维数组， '文件名'=>配置文件
+        /*
+        Array
+        (
+            [app] => Array
+                (
+                    [key] => SomeRandomKey!!!
+                    [cipher] => AES-256-CBC
+                    [locale] => en
+                    [fallback_locale] => en
+                    [name] => 尼玛
+                )
+        )
+         */
+        
+
     }
 
     /**
