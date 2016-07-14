@@ -1174,9 +1174,6 @@ class Container implements ArrayAccess, ContainerContract
      */
     public function offsetSet($key, $value)
     {
-        // If the value is not a Closure, we will make it one. This simply gives
-        // more "drop-in" replacement functionality for the Pimple which this
-        // container's simplest functions are base modeled and built after.
         if (! $value instanceof Closure) {
             //如果$value不是回调函数，就把它定义成回调函数
             $value = function () use ($value) {

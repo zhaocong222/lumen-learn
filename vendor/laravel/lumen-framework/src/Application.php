@@ -8,6 +8,9 @@ class Application extends Container
     use Concerns\RoutesRequests,
         Concerns\RegistersExceptionHandlers;
 
+    //加载的配置
+    protected $loadedConfigurations = [];
+
 
     //初始化一些东西
     public function __construct($basePath = null)
@@ -16,7 +19,10 @@ class Application extends Container
         date_default_timezone_set(env('APP_TIMEZONE','UTC'));
 
         //执行魔术方法__set,然后执行offsetSet方法， 将基础路径设为根目录 /home/zc/web/lu
+        var_dump(isset($this->basePath));
         $this->basePath = $basePath;
+        var_dump(isset($this->basePath)); //false
+        exit();
         $this->bootstrapContainer();
         //注册错误和异常处理
         //$this->registerErrorHandling();
@@ -78,6 +84,84 @@ class Application extends Container
     {
         return '尼玛这里是 Lumen (5.2.7)';
     }
+
+    //自定义加载配置文件
+    public function configure($name)
+    {
+        //注册树
+        if (isset($this->loadedConfigurations[$name])){
+            return;
+        }
+
+        //给一个默认值
+        $this->loadedConfigurations[$name] = true;
+        //获取配置文件的路径
+        $path = $this->getConfigurationPath($name);
+
+
+
+    }
+
+    //获取配置文件的路径
+    public function getConfigurationPath($name = null)
+    {
+
+        if (! $name) {
+
+            $appConfigDir = $this->basePath('config').'/';
+
+            if (file_exists($appConfigDir)) {
+                return $appConfigDir;
+            } elseif (file_exists($path = __DIR__.'/../config/')) {
+                return $path;
+            }
+        } else {
+
+            $appConfigPath = $this->basePath('config').'/'.$name.'.php';
+            exit($appConfigPath);
+
+            if (file_exists($appConfigPath)) {
+                return $appConfigPath;
+            } elseif (file_exists($path = __DIR__.'/../config/'.$name.'.php')) {
+                return $path;
+            }
+        }
+    }
+
+
+    //获取basePath
+    public function basePath($path = null)
+    {
+        var_dump(isset($this->basePath));
+        echo 1231;
+        exit();
+        //getcwd(); ->/home/zc/web/lu/public
+        if (isset($this->basePath)){
+            return rtrim($this->basePath,'/').($path ? DIRECTORY_SEPARATOR.$path : $path);
+        }
+
+        if ($this->runningInConsole()) {
+            $this->basePath = getcwd();
+        } else {
+            $this->basePath = realpath(getcwd().'/../');
+        }
+
+        return $this->basePath($path);
+
+    }
+
+    //在命令行下运行
+    public function runningInConsole()
+    {
+        //apache2handler
+        //cli
+        //***cgi
+        return php_sapi_name() == 'cli';
+    }
+
+
+
+
 
 
 }
