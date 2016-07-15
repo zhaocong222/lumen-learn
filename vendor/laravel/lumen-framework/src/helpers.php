@@ -35,7 +35,11 @@ if (! function_exists('app')) {
         if (is_null($make)) {
             return Container::getInstance();
         }
-
+        /*
+        print_r(Container::getInstance());
+        exit();
+        */
+        //Container::getInstance() -> return static::$instance;
         return Container::getInstance()->make($make, $parameters);
     }
 }

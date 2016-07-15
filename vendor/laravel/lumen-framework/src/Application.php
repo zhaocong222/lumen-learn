@@ -56,8 +56,31 @@ class Application extends Container
 
         //注册容器别名,放入aliases
         $this->registerContainerAliases();
+    }
+
+    //获取或者验证当前环境
+    public function environment()
+    {
+        //获取APP_ENV配置，如果不存在，默认设置为production
+        $env = env('APP_ENV','production');
+
+        if (func_num_args() > 0){
+            $patterns = is_array(func_get_args(0)) ? func_get_args(0) : func_get_args();
+
+            foreach ($patterns as $pattern) {
+                if (Str::is($pattern, $env)) {
+                    return true;
+                }
+            }
+
+            return false;
+
+        }
+
+        return $env;
 
     }
+
 
     //注册容器别名
     protected function registerContainerAliases()
@@ -304,6 +327,59 @@ class Application extends Container
         'view' => 'registerViewBindings',
         'Illuminate\Contracts\View\Factory' => 'registerViewBindings',
     ];
+
+    protected function registerAuthBindings()
+    {
+        $this->singleton('auth', function () {
+            return $this->loadComponent('auth', 'Illuminate\Auth\AuthServiceProvider', 'auth');
+        });
+
+        $this->singleton('auth.driver', function () {
+            return $this->loadComponent('auth', 'Illuminate\Auth\AuthServiceProvider', 'auth.driver');
+        });
+
+        $this->singleton('Illuminate\Contracts\Auth\Access\Gate', function () {
+            return $this->loadComponent('auth', 'Illuminate\Auth\AuthServiceProvider', 'Illuminate\Contracts\Auth\Access\Gate');
+        });
+    }
+
+    public function loadComponent($config, $providers, $return = null)
+    {
+        $this->configure($config);
+
+        foreach ((array) $providers as $provider) {
+            $this->register($provider);
+        }
+
+        return $this->make($return ?: $config);
+    }
+
+    public function register($provider, $options = [], $force = false)
+    {
+        if (! $provider instanceof ServiceProvider) {
+            $provider = new $provider($this);
+        }
+
+        if (array_key_exists($providerName = get_class($provider), $this->loadedProviders)) {
+            return;
+        }
+
+        $this->loadedProviders[$providerName] = true;
+
+        $provider->register();
+        $provider->boot();
+    }
+
+    protected function registerLogBindings()
+    {
+        $this->singleton('Psr\Log\LoggerInterface', function () {
+            if ($this->monologConfigurator) {
+                return call_user_func($this->monologConfigurator, new Logger('lumen'));
+            } else {
+                return new Logger('lumen', [$this->getMonologHandler()]);
+            }
+        });
+    }
 
 
 

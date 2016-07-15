@@ -82,9 +82,13 @@ trait RoutesRequests
     public function group(array $attributes, Closure $callback)
     {
         $parentGroupAttributes = $this->groupAttributes;
-
+        
         if (isset($attributes['middleware']) && is_string($attributes['middleware'])) {
+            //['middleware' => 'auth|xxx']
             $attributes['middleware'] = explode('|', $attributes['middleware']);
+            //Array ( [middleware] => Array ( [0] => auth [1] => xxx ) )
+            //print_r($attributes);
+            //exit();
         }
 
         $this->groupAttributes = $attributes; //array->Array ( [namespace] => App\Http\Controllers )
@@ -101,6 +105,8 @@ trait RoutesRequests
      */
     public function get($uri, $action)
     {
+        echo $uri;
+        exit();
         //$action 为回调函数
         $this->addRoute('GET', $uri, $action);
 
