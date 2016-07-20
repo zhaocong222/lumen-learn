@@ -20,10 +20,10 @@ $app->get('/', function () use ($app) {
 */
 
 //当前
-$app->group(['middleware' => 'auth|xxx'], function () use ($app){
+//$app->group(['middleware' => 'auth'], function () use ($app){
 
-    $app->get('user', function () {
+    $app->get('/', function () {
         echo 1231;
     });
 
-});
+//});

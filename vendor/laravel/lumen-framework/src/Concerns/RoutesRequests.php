@@ -82,7 +82,7 @@ trait RoutesRequests
     public function group(array $attributes, Closure $callback)
     {
         $parentGroupAttributes = $this->groupAttributes;
-        
+
         if (isset($attributes['middleware']) && is_string($attributes['middleware'])) {
             //['middleware' => 'auth|xxx']
             $attributes['middleware'] = explode('|', $attributes['middleware']);
@@ -93,6 +93,7 @@ trait RoutesRequests
 
         $this->groupAttributes = $attributes; //array->Array ( [namespace] => App\Http\Controllers )
         call_user_func($callback, $this); //get_class($this); ->Laravel\Lumen\Application
+        //加载过所有的get,post请求后，还原groupAttributes属性
         $this->groupAttributes = $parentGroupAttributes;
     }
 
@@ -105,11 +106,8 @@ trait RoutesRequests
      */
     public function get($uri, $action)
     {
-        echo $uri;
-        exit();
         //$action 为回调函数
         $this->addRoute('GET', $uri, $action);
-
         return $this;
     }
 
@@ -196,6 +194,8 @@ trait RoutesRequests
     {
         $action = $this->parseAction($action); // array->[0=> object(Closure)[7]]
         //$this->groupAttributes-> 'namespace' => string 'App\Http\Controllers'
+
+
         if (isset($this->groupAttributes)) {
             if (isset($this->groupAttributes['prefix'])) {
                 $uri = trim($this->groupAttributes['prefix'], '/').'/'.trim($uri, '/');
@@ -204,7 +204,7 @@ trait RoutesRequests
             if (isset($this->groupAttributes['suffix'])) {
                 $uri = trim($uri, '/').rtrim($this->groupAttributes['suffix'], '/');
             }
-
+            //把中间将和action匿名函数合并 格式Array ( [0] => Closure Object ( ) [middleware] => Array ( [0] => auth ) )
             $action = $this->mergeGroupAttributes($action);
         }
 
@@ -219,7 +219,26 @@ trait RoutesRequests
                 $this->routes[$verb.$uri] = ['method' => $verb, 'uri' => $uri, 'action' => $action];
             }
         } else {
-            // GET/
+/*
+Array
+(
+    [GET/] => Array
+        (
+            [method] => GET
+            [uri] => /
+            [action] => Array
+                (
+                    [0] => Closure Object
+                        (
+                        )
+                    [middleware] => Array
+                        (
+                            [0] => auth
+                        )
+                )
+        )
+)
+             */
             $this->routes[$method.$uri] = ['method' => $method, 'uri' => $uri, 'action' => $action];
         }
     }
@@ -338,9 +357,10 @@ trait RoutesRequests
      */
     public function run($request = null)
     {
+
         //get_class($this); ->Laravel\Lumen\Application
         $response = $this->dispatch($request);
-
+        exit();
         if ($response instanceof SymfonyResponse) {
             //输出头信息,并且echo $content;
             $response->send();
@@ -393,8 +413,9 @@ trait RoutesRequests
         try {
 
             return $this->sendThroughPipeline($this->middleware, function () use ($method, $pathInfo) {
+
                 if (isset($this->routes[$method.$pathInfo])) { //$this->routes['Get/']
-                    //$this->routes[$method.$pathInfo]['action'] 为回调函数
+                    //$this->routes[$method.$pathInfo]['action'] 为回调函数 ,或者回调和中间件的合集
                     return $this->handleFoundRoute([true, $this->routes[$method.$pathInfo]['action'], []]);
                 }
 
@@ -496,7 +517,7 @@ trait RoutesRequests
         // Pipe through route middleware...
         if (isset($action['middleware'])) {
             $middleware = $this->gatherMiddlewareClassNames($action['middleware']);
-
+            //$middleware ->array
             return $this->prepareResponse($this->sendThroughPipeline($middleware, function () {
                 return $this->callActionOnArrayBasedRoute($this['request']->route());
             }));
