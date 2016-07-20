@@ -4,7 +4,7 @@ namespace Illuminate\Support\Facades;
 
 use Mockery;
 use RuntimeException;
-use Mockery\MockInterface;
+//use Mockery\MockInterface;
 
 abstract class Facade
 {
@@ -140,6 +140,7 @@ abstract class Facade
      */
     protected static function resolveFacadeInstance($name)
     {
+
         if (is_object($name)) {
             return $name;
         }

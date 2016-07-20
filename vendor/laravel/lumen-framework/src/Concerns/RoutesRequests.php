@@ -357,7 +357,6 @@ Array
      */
     public function run($request = null)
     {
-
         //get_class($this); ->Laravel\Lumen\Application
         $response = $this->dispatch($request);
         exit();
@@ -570,7 +569,9 @@ Array
     protected function callControllerAction($routeInfo)
     {
         list($controller, $method) = explode('@', $routeInfo[1]['uses']);
-
+        //$controller ->App\Http\Controllers\User\UserController
+        //$method -> index
+        
         if (! method_exists($instance = $this->make($controller), $method)) {
             throw new NotFoundHttpException;
         }

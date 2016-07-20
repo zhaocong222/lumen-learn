@@ -21,9 +21,18 @@ $app->get('/', function () use ($app) {
 
 //当前
 //$app->group(['middleware' => 'auth'], function () use ($app){
-
+    /*
     $app->get('/', function () {
         echo 1231;
     });
+    */
 
 //});
+
+$app->get('/user/{id:\d+}','User\UserController@index');
+
+$app->get('/list','User\UserController@mylist');
+
+$app->get('/cache','User\UserController@cache');
+
+$app->get('/admin','User\AdminController@index');

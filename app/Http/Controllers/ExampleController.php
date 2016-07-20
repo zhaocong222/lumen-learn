@@ -14,5 +14,11 @@ class ExampleController extends Controller
         //
     }
 
+
+    public function index()
+    {
+        echo __METHOD__;
+    }
+
     //
 }

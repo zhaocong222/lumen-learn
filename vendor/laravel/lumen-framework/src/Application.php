@@ -20,6 +20,8 @@ class Application extends Container
     use Concerns\RoutesRequests,
         Concerns\RegistersExceptionHandlers;
 
+    protected static $aliasesRegistered = false;
+
     protected $basePath;
 
     //加载的配置
@@ -160,6 +162,7 @@ class Application extends Container
             $this->{$method = $this->availableBindings[$abstract]}(); //$this->registerConfigBindings();
             $this->ranServiceBinders[$method] = true;
         }
+
         return parent::make($abstract, $parameters);//实质上就是return new ConfigRepository;
     }
 
@@ -379,6 +382,32 @@ class Application extends Container
                 return new Logger('lumen', [$this->getMonologHandler()]);
             }
         });
+    }
+
+
+    public function withFacades()
+    {
+        Facade::setFacadeApplication($this); //->static::$app = $this;
+        return; //修改的
+
+        if (! static::$aliasesRegistered) {
+            static::$aliasesRegistered = true;
+
+            //class_alias — 为一个类创建别名
+            class_alias('Illuminate\Support\Facades\Auth', 'Auth');
+            class_alias('Illuminate\Support\Facades\Cache', 'Cache');
+            class_alias('Illuminate\Support\Facades\DB', 'DB');
+            class_alias('Illuminate\Support\Facades\Event', 'Event');
+            class_alias('Illuminate\Support\Facades\Gate', 'Gate');
+            class_alias('Illuminate\Support\Facades\Log', 'Log');
+            class_alias('Illuminate\Support\Facades\Queue', 'Queue');
+            class_alias('Illuminate\Support\Facades\Schema', 'Schema');
+            class_alias('Illuminate\Support\Facades\URL', 'URL');
+            class_alias('Illuminate\Support\Facades\Validator', 'Validator');
+
+            //导入Request facde
+            //class_alias('Illuminate\Support\Facades\Request', 'Request');
+        }
     }
 
 

@@ -622,13 +622,15 @@ class Container implements ArrayAccess, ContainerContract
         */
         //isBuildable是否实例化
         if ($this->isBuildable($concrete, $abstract)) {
+
             /*
             if ($abstract == 'Illuminate\Http\Request'){
                 echo $concrete;
                 print_r($parameters);
             }
             */
-            //实例化
+            //实例化 ->$concrete App\Http\Controllers\User\UserController
+
             $object = $this->build($concrete, $parameters);
         } else {
             $object = $this->make($concrete, $parameters);
@@ -743,7 +745,6 @@ class Container implements ArrayAccess, ContainerContract
         // 若无构造函数，直接实例化并返回
         if (is_null($constructor)) {
             array_pop($this->buildStack);
-
             return new $concrete;
         }
 

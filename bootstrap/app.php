@@ -13,6 +13,8 @@ $app = new Laravel\Lumen\Application(
     realpath(__DIR__.'/../')
 );
 
+$app->withFacades();
+
 //容器Container->singleton方法
 
 //放入容器中
@@ -25,6 +27,9 @@ $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
     App\Console\Kernel::class
 );
+
+//注册验证的服务
+//$app->register(App\Providers\AuthServiceProvider::class);
 
 /*
 var_dump($app);
