@@ -29,7 +29,7 @@ $app->singleton(
 );
 
 //注册验证的服务
-//$app->register(App\Providers\AuthServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
 
 /*
 var_dump($app);

@@ -359,6 +359,8 @@ class Application extends Container
 
     public function register($provider, $options = [], $force = false)
     {
+        //(string)App\Providers\AppServiceProvider
+        
         if (! $provider instanceof ServiceProvider) {
             $provider = new $provider($this);
         }
