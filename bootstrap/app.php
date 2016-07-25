@@ -28,8 +28,13 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
-//注册验证的服务
+//注册服务提供者
 $app->register(App\Providers\AppServiceProvider::class);
+
+//注册Test服务
+$app->register(App\Providers\TestServiceProvider::class);
+
+
 
 /*
 var_dump($app);

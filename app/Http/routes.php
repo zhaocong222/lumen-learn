@@ -36,3 +36,5 @@ $app->get('/list','User\UserController@mylist');
 $app->get('/cache','User\UserController@cache');
 
 $app->get('/admin','User\AdminController@index');
+
+$app->get('/test','User\TestController@index');

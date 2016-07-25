@@ -24,6 +24,9 @@ class Application extends Container
 
     protected $basePath;
 
+    public $loadedProviders = [];
+
+
     //加载的配置
     protected $loadedConfigurations = [];
     //The service binding methods that have been executed.
@@ -65,7 +68,6 @@ class Application extends Container
     {
         //获取APP_ENV配置，如果不存在，默认设置为production
         $env = env('APP_ENV','production');
-
         if (func_num_args() > 0){
             $patterns = is_array(func_get_args(0)) ? func_get_args(0) : func_get_args();
 
@@ -162,7 +164,6 @@ class Application extends Container
             $this->{$method = $this->availableBindings[$abstract]}(); //$this->registerConfigBindings();
             $this->ranServiceBinders[$method] = true;
         }
-
         return parent::make($abstract, $parameters);//实质上就是return new ConfigRepository;
     }
 
@@ -360,7 +361,7 @@ class Application extends Container
     public function register($provider, $options = [], $force = false)
     {
         //(string)App\Providers\AppServiceProvider
-        
+
         if (! $provider instanceof ServiceProvider) {
             $provider = new $provider($this);
         }

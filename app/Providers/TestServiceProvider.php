@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class AppServiceProvider extends ServiceProvider
+class TestServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
@@ -13,14 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //echo __METHOD__."<br/>";
+        $this->app->singleton('Admin',function(){
+            return new \App\Http\Controllers\User\AdminController;
+        });
     }
-
-    public function boot()
-    {
-        //echo __METHOD__."<br/>";
-    }
-
-
 
 }
